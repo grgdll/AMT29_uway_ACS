@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import ipdb
+import subprocess
 
 
 def rd_amt_ncdf(fn):
@@ -23,35 +24,34 @@ def hdr(amt, fn_cal, fn_docs):
 
     header = {
     "/begin_header": "",
-    "/received =": "",
-    "/identifier_product_doi =": "",
-    "/investigators =": "Giorgio_DallOlmo,Gavin_Tilstone",
-    "/affiliations =": "Plymouth_Marine_Laboratory,OGS",
-    "/contact =": "gdallolmo@ogs.it,ghti@pml.ac.uk",
+    "/received=": "",
+    "/investigators=": "Giorgio_DallOlmo,Gavin_Tilstone",
+    "/affiliations=": "Plymouth_Marine_Laboratory,OGS",
+    "/contact=": "gdallolmo@ogs.it,ghti@pml.ac.uk",
     "/experiment=": "AMT",
-    "/cruise =": amt.attrs['cruise_name'],
-    "/station =": "NA",
-    "/data_file_name =": "",
-    "/documents =": fn_docs, # EXPORTS_NA_ACS_inline_ProcessingReport_v20210818.docx, checklist_acs_particulate_inline_EXPORTS_NA.rtf
-    "/instrument_model =": "ACS",
-    "/instrument_manufacturer =": "SBE",
-    "/calibration_files =": fn_cal, #
-    "/data_type =": "flow_thru",
-    "/data_status =": "preliminary",
-    "/start_date =": "yyyymmdd",
-    "/end_date =": "yyyymmdd",
-    "/start_time =": "HH:MM:SS[GMT]",
-    "/end_time =": "HH:MM:SS[GMT]",
-    "/north_latitude =": "DD.DDD[DEG]",
-    "/south_latitude =": "DD.DDD[DEG]",
-    "/east_longitude =": "DD.DDD[DEG]",
-    "/west_longitude =": "DD.DDD[DEG]",
-    "/water_depth =": "NA",
-    "/measurement_depth =": "7",
-    "/missing =": "-9999",
-    "/delimiter =": "comma",
-    "/fields =": "",
-    "/units =": "yyyymmdd, hh:mm: ss, degrees, degrees, degreesC, PSU, 1/m, 1/m, 1/m, 1/m, none, ug/L",
+    "/cruise=": amt.attrs['cruise_name'],
+    "/station=": "NA",
+    "/data_file_name=": "",
+    "/documents=": fn_docs, # EXPORTS_NA_ACS_inline_ProcessingReport_v20210818.docx, checklist_acs_particulate_inline_EXPORTS_NA.rtf
+    "/instrument_model=": "ACS",
+    "/instrument_manufacturer=": "SBE",
+    "/calibration_files=": fn_cal, #
+    "/data_type=": "flow_thru",
+    "/data_status=": "preliminary",
+    "/start_date=": "yyyymmdd",
+    "/end_date=": "yyyymmdd",
+    "/start_time=": "HH:MM:SS[GMT]",
+    "/end_time=": "HH:MM:SS[GMT]",
+    "/north_latitude=": "DD.DDD[DEG]",
+    "/south_latitude=": "DD.DDD[DEG]",
+    "/east_longitude=": "DD.DDD[DEG]",
+    "/west_longitude=": "DD.DDD[DEG]",
+    "/water_depth=": "NA",
+    "/measurement_depth=": "7",
+    "/missing=": "-9999",
+    "/delimiter=": "comma",
+    "/fields=": "",
+    "/units=": "yyyymmdd, hh:mm: ss, degrees, degrees, degreesC, PSU, 1/m, 1/m, 1/m, 1/m, none, ug/L",
     "/end_header": "",
     }
 
@@ -76,12 +76,12 @@ def hdr(amt, fn_cal, fn_docs):
         _units = _units + "1/m,"
 
     # add final parts to strings
-    _fields = _fields + "bincount, Chl_lineheight"
+    _fields = _fields + "bincount,Chl_lineheight"
     _units = _units + "none,ug/L"
 
     # add strings to keys
-    header["/fields ="] = _fields
-    header["/units ="] = _units
+    header["/fields="] = _fields
+    header["/units="] = _units
 
     ### fill in file name
     # extract start and end dates and times
@@ -99,15 +99,15 @@ def hdr(amt, fn_cal, fn_docs):
     sb_filename = amt_no.upper() + "_InLine_ACS_" + start_date + "_" + end_date + "_Particulate_v" + todays_date + ".sb"
 
     # add string to key
-    header["/data_file_name ="] = sb_filename
+    header["/data_file_name="] = sb_filename
 
-    header["/start_date ="] = start_date
-    header["/start_time ="] = start_time
+    header["/start_date="] = start_date
+    header["/start_time="] = start_time
 
-    header["/end_date ="] = end_date
-    header["/end_time ="] = end_time
+    header["/end_date="] = end_date
+    header["/end_time="] = end_time
 
-    header["/received ="] = todays_date
+    header["/received="] = todays_date
 
 
     # extract geographic boundaries
@@ -120,10 +120,10 @@ def hdr(amt, fn_cal, fn_docs):
     west_longitude = f'{amt.uway_long.values[innan].min():+07.3f}[DEG]'
 
     # add strings to keys
-    header["/north_latitude ="] = north_latitude
-    header["/south_latitude ="] = south_latitude
-    header["/east_longitude ="] = east_longitude
-    header["/west_longitude ="] = west_longitude
+    header["/north_latitude="] = north_latitude
+    header["/south_latitude="] = south_latitude
+    header["/east_longitude="] = east_longitude
+    header["/west_longitude="] = west_longitude
 
     print('...done')
 
@@ -181,32 +181,31 @@ def data_table(amt):
 
     return amt2csv
 
-def export_2_seabass(header, amt2csv):
+def export_2_seabass(header, amt2csv, fnout):
     print('writing SeaBASS file...')
-
-    fnout = '../sb/' + header['/data_file_name =']
 
     with open(fnout, 'w') as ict:
         # Write the header lines, including the index variable for
         # the last one if you're letting Pandas produce that for you.
         # (see above).
         for key in header.keys():
-            ict.write(key + " " + header[key] + "\n")
+            ict.write(key + header[key] + "\n")
 
         # Just write the data frame to the file object instead of
         # to a filename. Pandas will do the right thing and realize
         # it's already been opened.
         amt2csv.to_csv(ict, header = False,
                             index = False,
-                            na_rep = header['/missing ='])
+                            na_rep = header['/missing='])
 
     print('...done')
 
-    return
+    return fnout
 
-def run_fcheck():
+def run_fcheck(fnout):
     print('running fcheck...')
 
+    subprocess.run(["../fcheck4/fcheck4.pl", fnout])
 
     print('...done')
 
@@ -214,6 +213,7 @@ def run_fcheck():
 
 
 # Press the green button in the gutter to run the script.
+### %run write_sb_file.py /Users/gdal/Documents/AMT_processed/AMT29/Step3/amt29_final_with_debiased_chl.nc acs122.dev checklist_acs_particulate_inline_AMT29.rtf,checklist_acs_ag_cg_AMT29.rtf,AMT29_ACS_inline_ProcessingReport_v20220810.docx
 if __name__ == '__main__':
 
     if len(sys.argv) == 1:
@@ -242,9 +242,11 @@ if __name__ == '__main__':
         amt2csv = data_table(amt)
 
         # write file
-        export_2_seabass(header, amt2csv)
+        fnout = '../sb/' + header['/data_file_name=']
+        export_2_seabass(header, amt2csv, fnout)
 
-        # plot map?
+        # run fcheck
+        run_fcheck(fnout)
 
 
 
